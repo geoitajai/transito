@@ -3,7 +3,7 @@
 import os
 import json
 import datetime
-import urllib
+import urllib.request
 #from shapely.geometry import LineString
 
 # %%
@@ -14,13 +14,14 @@ dia_semana_t = ('Segunda-Feira', 'Terça-Feira', 'Quarta-Feira',
 # local_base_feed = '/home/jaceguay/Insync/jaceguay@gmail.com/Google Drive - Shared with me/waze/feed'
 # pastas_base_feed = os.listdir(local_base_feed)
 feed_url = 'https://world-georss.waze.com/rtserver/web/TGeoRSS?tk=ccp_partner&format=JSON&types=traffic,alerts,irregularities&polygon=-48.625000,-26.957000;-48.619000,-26.924000;-48.668000,-26.898000;-48.666000,-26.883000;-48.689000,-26.886000;-48.691000,-26.865000;-48.705000,-26.867000;-48.715000,-26.877000;-48.726000,-26.870000;-48.719000,-26.844000;-48.730000,-26.838000;-48.742000,-26.855000;-48.762000,-26.856000;-48.759000,-26.938000;-48.874000,-27.011000;-48.813000,-27.106000;-48.625000,-26.957000'
-
+wpath = os.getcwd()
+resultados = f'{wpath}/resultados'
+print(resultados)
 # %%
 #dados_coletados = []
 
 response = urllib.request.urlopen(feed_url)
 dados_coletados = [json.loads(response.read())]
-print(dados_coletados)
 
 # %%
 group_alerts = {}
@@ -203,7 +204,7 @@ for e in dados_coletados:
 
 def atualiza_arquivo(grupo, dados, id):
     try:
-        with open(f'resultados/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', encoding='UTF-8') as arq_json:
+        with open(f'{resultados}/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', encoding='UTF-8') as arq_json:
             data = json.load(arq_json)
             diferencas = set(data[f'{id}s']) ^ set(dados[1][f'{id}s'])
             if len(diferencas) == 0:
@@ -218,36 +219,36 @@ def atualiza_arquivo(grupo, dados, id):
                                 novo_registro['properties'][id])
                         else:
                             pass
-                with open(f'resultados/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', 'w') as fp:
+                with open(f'{resultados}/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', 'w') as fp:
                     json.dump(data, fp, default=str)
     except:
         try:
-            os.makedirs(f'resultados/{dados[0][0:4]}/{grupo}')
-            with open(f'resultados/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', 'w') as fp:
+            os.makedirs(f'{resultados}/{dados[0][0:4]}/{grupo}')
+            with open(f'{resultados}/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', 'w') as fp:
                 json.dump(dados[1], fp, default=str)
         except:
-            with open(f'resultados/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', 'w') as fp:
+            with open(f'{resultados}/{dados[0][0:4]}/{grupo}/{dados[0]}_{grupo}.json', 'w') as fp:
                 json.dump(dados[1], fp, default=str)
 
 
 # %%
 for arquivo_final in group_alerts.items():
     try:
-        os.makedirs(f'resultados/{arquivo_final[0][0:4]}')
+        os.makedirs(f'{resultados}/{arquivo_final[0][0:4]}')
         atualiza_arquivo('alerts', arquivo_final, 'uuid')
     except:
         atualiza_arquivo('alerts', arquivo_final, 'uuid')
 
 for arquivo_final in group_irregularities.items():
     try:
-        os.makedirs(f'resultados/{arquivo_final[0][0:4]}')
+        os.makedirs(f'{resultados}/{arquivo_final[0][0:4]}')
         atualiza_arquivo('irregularities', arquivo_final, 'id')
     except:
         atualiza_arquivo('irregularities', arquivo_final, 'id')
 
 for arquivo_final in group_jams.items():
     try:
-        os.makedirs(f'resultados/{arquivo_final[0][0:4]}')
+        os.makedirs(f'{resultados}/{arquivo_final[0][0:4]}')
         atualiza_arquivo('jams', arquivo_final, 'uuid')
     except:
         atualiza_arquivo('jams', arquivo_final, 'uuid')
