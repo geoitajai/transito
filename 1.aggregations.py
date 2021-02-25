@@ -10,7 +10,8 @@ pd.set_option('display.max_columns', 40)
 
 # %%
 # config
-local_dados = '/home/jaceguay/Documents/Projetos/urbanismo/waze/scripts/resultados'
+local_dados = '/mnt/c/Users/jaceguay/Documents/Projetos/urbanismo/waze/scripts/resultados'
+local_export = '/mnt/c/Users/jaceguay/Documents/Projetos/urbanismo/waze/scripts/export'
 data_hj = datetime.date.today()
 hoje = data_hj.strftime('%Y-%m-%d')
 num_mesatual = int(data_hj.strftime('%m'))
@@ -73,5 +74,116 @@ mes_passado_jams = gpd.overlay(
     how='intersection')
 
 # %%
-# dias
-mes_atual_jams_dias = mes_atual_jams.groupby(["clust","category"])["id"].count().unstack()
+# separar por faixa horário
+# pd.unique(mes_passado_jams['timestamp'].str[11:13])
+# 5-8, 8-11, 11-14, 14-17, 17-20, 20-23, 23-5
+# mes_passado_jams['hora'] = mes_passado_jams['timestamp'].str[11:13].astype(
+#     'int')
+
+mes_passado_jams['intervalohora'] = pd.cut(mes_passado_jams['timestamp'].str[11:13].astype('int'),
+                                           [0, 5, 8, 11, 14, 17, 20, 23],
+                                           right=False)
+
+mes_atual_jams['intervalohora'] = pd.cut(mes_atual_jams['timestamp'].str[11:13].astype('int'),
+                                         [0, 5, 8, 11, 14, 17, 20, 23],
+                                         right=False)
+
+# %%
+# ## Agregações
+# Mês
+
+# Mês passado
+mes_passado_jams_total = mes_passado_jams.groupby(
+    ['intervalohora']
+).agg({
+    'delay': sum
+}).reset_index()
+
+mes_passado_jams_total['intervalohora'] = mes_passado_jams_total[
+    'intervalohora'
+].astype(str).str[1:-1]
+
+# exportar json
+mes_passado_jams_total.to_json(
+    'export/mes_passado_jams_total.json',  orient="columns")
+
+mes_passado_jams_total.to_csv('export/mes_passado_jams_total.csv')
+
+# Mês atual
+mes_atual_jams_total = mes_atual_jams.groupby(
+    ['intervalohora']
+).agg({
+    'delay': sum
+}).reset_index()
+
+mes_atual_jams_total['intervalohora'] = mes_atual_jams_total[
+    'intervalohora'
+].astype(str).str[1:-1]
+
+# exportar json
+mes_atual_jams_total.to_json(
+    'export/mes_atual_jams_total.json', orient="columns")
+
+mes_atual_jams_total.to_csv('export/mes_atual_jams_total.csv',index=False)
+
+# %%
+# Mês + dia da semana + hora
+
+mes_passado_jams_total_diasemana = mes_passado_jams.groupby(
+    ['dia_semana', 'intervalohora']
+).agg({
+    'delay': sum
+})
+
+mes_atual_jams_total_diasemana = mes_atual_jams.groupby(
+    ['dia_semana', 'intervalohora']
+).agg({
+    'delay': sum
+})
+
+# %%
+# Mês + dia da semana + bairro + sentido
+
+mes_passado_jams_total_bairro = mes_passado_jams.groupby(
+    ['nome', 'orientacao', 'dia_semana']
+).agg({
+    'delay': sum
+})
+
+mes_atual_jams_total_bairro = mes_atual_jams.groupby(
+    ['nome', 'orientacao', 'dia_semana']
+).agg({
+    'delay': sum
+})
+
+# %%
+# Via + dia da semana + sentido
+
+mes_passado_jams_total_viatotal = mes_passado_jams.groupby(
+    ['street', 'orientacao', 'dia_semana', 'intervalohora']
+).agg({
+    'delay': sum
+})
+
+mes_atual_jams_total_viatotal = mes_atual_jams.groupby(
+    ['street', 'orientacao', 'dia_semana', 'intervalohora']
+).agg({
+    'delay': sum
+})
+
+# %%
+# Via + destino + dia da semana + sentido
+
+mes_passado_jams_total_via_destino = mes_passado_jams.groupby(
+    ['street', 'endNode', 'dia_semana', 'intervalohora']
+).agg({
+    'delay': sum
+})
+
+mes_atual_jams_total_via_destino = mes_atual_jams.groupby(
+    ['street', 'endNode', 'dia_semana', 'intervalohora']
+).agg({
+    'delay': sum
+})
+
+# %%
